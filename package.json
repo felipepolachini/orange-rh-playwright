@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "Playwright + GitHub Actions project",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "run_tests": "npx playwright test",
+    "run_tests_headless": "npx playwright test --headed",
+    "run_tests_debug": "npx playwright test --debug",
+    "run_tests_ui": "npx playwright test --ui"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/felipepolachini/orange-rh-playwright.git"
@@ -17,6 +22,7 @@
   },
   "homepage": "https://github.com/felipepolachini/orange-rh-playwright#readme",
   "devDependencies": {
+    "@faker-js/faker": "^10.5.0",
     "@playwright/test": "^1.61.1",
     "@types/node": "^26.1.1"
   }
