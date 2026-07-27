@@ -29,9 +29,7 @@ export class LoginPage {
 
     async navigate(): Promise<void> {
 
-        await this.page.goto('https://opensource-demo.orangehrmlive.com/web/index.php/auth/login');
-
-        await this.waitUntilLoaded();
+        await this.page.goto('/');
 
     }
 

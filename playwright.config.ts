@@ -4,10 +4,14 @@ import { defineConfig, devices } from '@playwright/test';
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
 
+// dotenv is optional in some environments; require it dynamically to avoid
+// crashing when the package is not installed.
+import dotenv from 'dotenv';
+import path from 'path';
+
+
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -28,9 +32,8 @@ export default defineConfig({
 
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
-    baseURL: 'https://opensource-demo.orangehrmlive.com/',
-   // storageState: 'playwright/.auth/admin.json',
-
+    baseURL: process.env.BASE_URL ,
+    
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
   },
 
@@ -44,8 +47,8 @@ export default defineConfig({
       name: 'chromium',
       use: {
          ...devices['Desktop Chrome'],
-         baseURL: 'https://opensource-demo.orangehrmlive.com/',
-         storageState: 'playwright/.auth/admin.json',
+         baseURL: process.env.BASE_URL,
+         storageState: process.env.STORAGE_STATE_PATH 
       },
       
       dependencies: ['setup'],

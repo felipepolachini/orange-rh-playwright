@@ -25,7 +25,7 @@ export class AdminPage {
         return this.page.getByRole('heading', { name: 'Admin' });
     }
 
-    private get usernameField() {
+    private get menuItemField() {
         return this.page.getByRole('textbox').first();
     }
 
@@ -45,6 +45,10 @@ export class AdminPage {
         return this.page.getByRole('button', { name: 'Save' });
     }
 
+    private get userRows() {
+        return this.page.locator('.oxd-table-body').getByRole('row');
+    }
+
     // ==========================
     // Navigation
     // ==========================
@@ -61,11 +65,11 @@ export class AdminPage {
     // Search
     // ==========================
 
-    async searchUser(username: string): Promise<void> {
+    async searchMenuItem(menuItem: string): Promise<void> {
 
-        await this.usernameField.clear();
+        await this.menuItemField.clear();
 
-        await this.usernameField.fill(username);
+        await this.menuItemField.fill(menuItem);
 
         await this.searchButton.click();
 
@@ -204,14 +208,13 @@ export class AdminPage {
 
     }
 
-    // ==========================
-    // Assertions
-    // ==========================
-
-    async expectUserExists(username: string): Promise<void> {
-
-       await expect(this.heading).toBeVisible();
-
+    async getUserRows() {
+        return this.userRows;
     }
+    
 
+    async getRecordCount(number: number) {
+        await this.page.getByText(`(${number}) Records Found`)
+    }
+    
 }

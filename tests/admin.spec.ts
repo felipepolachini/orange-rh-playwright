@@ -1,22 +1,18 @@
-import { test } from '@playwright/test';
-import { AdminPage } from './support/actions/admin';
+import { test, expect } from './support';
 
-test('Should search user by username', async ({ page }) => {
+test.describe(() =>{
+        test('TC-01: View user list', async ({ login, admin }) => {
 
-    console.log(await page.context().storageState());
+        await login.navigate();
 
-    //await page.goto('/web/index.php/dashboard/index');
+        await admin.open();
 
-    console.log(await page.url());
+        await admin.searchMenuItem('Admin');
 
-    await page.pause();
+        await expect(await admin.getUserRows()).not.toHaveCount(0);
 
-    const adminPage = new AdminPage(page);
+        await admin.getRecordCount(await (await admin.getUserRows()).count());
 
-    await adminPage.open();
+    });
+})
 
-    await adminPage.searchUser('Admin');
-
-    await adminPage.expectUserExists('Admin');
-
-});
