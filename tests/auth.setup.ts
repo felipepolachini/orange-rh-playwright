@@ -1,11 +1,8 @@
-import { test as setup, expect, FullConfig  } from '@playwright/test';
-import { LoginPage } from './support/actions/login';
+import { test as setup, expect } from './support';
 
 
-setup('Authenticate', async ({ page }, testInfo: { config: FullConfig }) => {
-
-    const login = new LoginPage(page);
-
+setup('Authenticate', async ({ page, login, dashboard }) => {
+   
     const storageState = process.env.STORAGE_STATE_PATH
     const username = process.env.ADMIN_USERNAME ?? 'Admin';
     const password = process.env.ADMIN_PASSWORD ?? 'admin123';
@@ -18,8 +15,8 @@ setup('Authenticate', async ({ page }, testInfo: { config: FullConfig }) => {
         password
     );
 
-    await expect(page).toHaveURL(/dashboard/);
-    await expect(page.getByText('Dashboard').first()).toBeVisible();
+    await dashboard.waitUntilLoaded();
+
 
     await page.context().storageState({
         path: storageState as string 

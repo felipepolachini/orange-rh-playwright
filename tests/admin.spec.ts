@@ -1,6 +1,6 @@
 import { test, expect } from './support';
 
-test.describe(() =>{
+test.describe(('Admin - System Users'), ()=>{
         test('TC-01: View user list', async ({ login, admin }) => {
 
         await login.navigate();
