@@ -1,15 +1,10 @@
 import { expect, Locator, Page } from '@playwright/test';
-import { faker } from '@faker-js/faker';
+import type { UserData } from '../data/userController';
 
-export interface UserData {
-    employeeName: string;
-    role: 'Admin' | 'ESS';
-    status: 'Enabled' | 'Disabled';
-    username?: string;
-    password?: string;
-}
 
 export class AdminPage {
+
+    private readonly createdUsers: string[] = [];
 
     constructor(private readonly page: Page) {}
 
@@ -26,8 +21,11 @@ export class AdminPage {
     }
 
     private get menuItemField() {
-        return this.page.getByRole('textbox').first();
-    }
+         return this.page
+            .locator('.oxd-table-filter-area')
+            .getByRole('textbox')
+            .first();
+        }
 
     private get searchButton() {
         return this.page.getByRole('button', { name: 'Search' });
@@ -47,6 +45,10 @@ export class AdminPage {
 
     private get userRows() {
         return this.page.locator('.oxd-table-body').getByRole('row');
+    }
+
+    private userRowByUsername(username: string): Locator {
+        return this.userRows.filter({ hasText: username });
     }
 
     // ==========================
@@ -79,6 +81,10 @@ export class AdminPage {
 
     }
 
+    async searchByUsername(username: string): Promise<void> {
+        await this.searchMenuItem(username);
+    }
+
     async clearSearch(): Promise<void> {
 
         await this.resetButton.click();
@@ -90,17 +96,6 @@ export class AdminPage {
     // ==========================
 
     async createUser(data: UserData): Promise<string> {
-
-        const username =
-            data.username ??
-            faker.internet.username().toLowerCase();
-
-        const password =
-            data.password ??
-            faker.internet.password({
-                length: 12,
-                memorable: false
-            });
 
         await this.addButton.click();
 
@@ -123,13 +118,18 @@ export class AdminPage {
             .click();
 
         // Employee
-        const employee = this.page.getByPlaceholder('Type for hints...');
+        const employee = this.page.getByRole('textbox', { name: 'Type for hints...' });
 
         await employee.fill(data.employeeName);
 
-        await employee.press('ArrowDown');
+        const firstSuggestion = this.page
+            .getByRole('option')
+            .filter({ hasNotText: 'Searching' })
+            .first();
 
-        await employee.press('Enter');
+        await expect(firstSuggestion).toBeVisible();
+
+        await firstSuggestion.click();
 
         // Status
         await this.page
@@ -147,18 +147,18 @@ export class AdminPage {
         await this.page
             .locator("input.oxd-input")
             .nth(1)
-            .fill(username);
+            .fill(data.username);
 
         // Password
         await this.page
             .locator('input[type=password]')
             .first()
-            .fill(password);
+            .fill(data.password);
 
         await this.page
             .locator('input[type=password]')
             .nth(1)
-            .fill(password);
+            .fill(data.password);
 
         await this.saveButton.click();
 
@@ -166,7 +166,9 @@ export class AdminPage {
             this.page.getByText('Successfully Saved')
         ).toBeVisible();
 
-        return username;
+        this.createdUsers.push(data.username);
+
+        return data.username;
 
     }
 
@@ -208,13 +210,24 @@ export class AdminPage {
 
     }
 
+    async deleteUserByUsername(username: string): Promise<void> {
+
+        await this.searchByUsername(username);
+
+        await this.deleteFirstUser();
+
+    }
+
     async getUserRows() {
         return this.userRows;
     }
-    
+
 
     async getRecordCount(number: number) {
         await this.page.getByText(`(${number}) Records Found`)
     }
-    
+
+    async assertUserExists(username: string): Promise<void> {
+        await expect(this.userRowByUsername(username)).toHaveCount(1);
+    }
 }
