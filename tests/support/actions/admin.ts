@@ -1,5 +1,5 @@
 import { expect, Locator, Page } from '@playwright/test';
-import type { UserData } from '../data/userController';
+import type { UserData } from '../data/admin/userController';
 
 
 export class AdminPage {

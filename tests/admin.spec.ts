@@ -1,5 +1,5 @@
 import { test, expect } from './support';
-import { buildUserData } from './support/data/userController';
+import { buildUserData } from './support/data/admin/userController';
 
 test.describe(('Admin - System Users'), ()=>{
 
@@ -10,14 +10,19 @@ test.describe(('Admin - System Users'), ()=>{
             await admin.open();
         });
 
-        test.afterEach(async ({ admin }) => {
+        test.afterEach(async ({ adminApi  }) => {
 
-        if (createdUsername) {
-            await admin.deleteUserByUsername(createdUsername);
-            createdUsername = undefined;
-        }
+            //if (createdUsername) {
+              //  await admin.deleteUserByUsername(createdUsername);
+               // createdUsername = undefined;
+           // }
 
-    });
+            if (createdUsername) {
+                await adminApi.deleteUserByUsername(createdUsername);
+                createdUsername = undefined;
+            }
+
+        });
 
         test('TC-01: View user list', async ({admin }) => {
 
