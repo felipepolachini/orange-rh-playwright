@@ -3,6 +3,7 @@ import { AdminPage } from './actions/admin';
 import { LoginPage } from './actions/login';
 import { DashboardPage } from './actions/dashboard';
 import { AdminApi } from './api/adminApi';
+import { PimApi } from './api/pimAPI';
 
 
 type Fixtures = {
@@ -10,6 +11,7 @@ type Fixtures = {
   admin: AdminPage;
   dashboard: DashboardPage;
   adminApi: AdminApi;
+  pimApi: PimApi;
 };
 
 export const test = base.extend<Fixtures>({
@@ -22,20 +24,35 @@ export const test = base.extend<Fixtures>({
   dashboard: async ({ page }, use) => {
     await use(new DashboardPage(page));
   },
+  pimApi: async ({ request }, use) => {
+
+    const currentState = await request.storageState();
+
+    const apiContext = await playwrightRequest.newContext({
+      baseURL: process.env.BASE_URL,
+      storageState: currentState,
+    });
+
+    await use(new PimApi(apiContext));
+
+    await apiContext.dispose();
+
+  },
   
   adminApi: async ({ request }, use) => {
 
     const currentState = await request.storageState();
 
     const apiContext = await playwrightRequest.newContext({
+      baseURL: process.env.BASE_URL,
       storageState: currentState,
     });
 
-    await use(new AdminApi(apiContext));
+    await use(new AdminApi(apiContext, new PimApi(apiContext)));
 
     await apiContext.dispose();
 
-  },
+},
 });
 
 export { expect };

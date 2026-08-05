@@ -1,12 +1,25 @@
 import { expect, Locator, Page } from '@playwright/test';
 import type { UserData } from '../data/admin/userController';
 
+export interface UserSearchFilters {
+    username?: string;
+    userRole?: UserData['role'];
+    employeeName?: string;
+    status?: UserData['status'];
+}
+
+export interface CreatedUser {
+    username: string;
+    employeeName: string;
+}
 
 export class AdminPage {
 
     private readonly createdUsers: string[] = [];
 
-    constructor(private readonly page: Page) {}
+    constructor(private readonly page: Page) {
+        this.page = page;
+    }
 
     // ==========================
     // Locators
@@ -20,12 +33,40 @@ export class AdminPage {
         return this.page.getByRole('heading', { name: 'Admin' });
     }
 
+    private get usernameFilterField() {
+         return this.page
+            .locator('.oxd-grid-item')
+            .filter({ hasText: /^Username$/ })
+            .getByRole('textbox')
+    }
+
+    private get userRoleFilterDropdown() {
+        return this.page
+            .locator('.oxd-grid-item')
+            .filter({ hasText: /^User Role/ })
+            .locator('.oxd-select-text')
+    }
+
     private get menuItemField() {
          return this.page
             .locator('.oxd-table-filter-area')
             .getByRole('textbox')
             .first();
-        }
+    }
+
+     private get employeeNameFilterField() {
+        return this.page
+            .locator('.oxd-grid-item')
+            .filter({ hasText: 'Employee Name' })
+            .getByRole('textbox', { name: 'Type for hints...' })
+    }
+
+    private get statusFilterDropdown() {
+        return this.page
+            .locator('.oxd-grid-item')
+            .filter({ hasText: 'Status' })
+            .locator('.oxd-select-text')
+    }
 
     private get searchButton() {
         return this.page.getByRole('button', { name: 'Search' });
@@ -83,6 +124,43 @@ export class AdminPage {
 
     async searchByUsername(username: string): Promise<void> {
         await this.searchMenuItem(username);
+    }
+
+    async searchByAllFilters(filters: UserSearchFilters): Promise<void> {
+
+        if (filters.username) {
+            await this.usernameFilterField.clear();
+            await this.usernameFilterField.fill(filters.username);
+        }
+
+        if (filters.userRole) {
+            await this.userRoleFilterDropdown.click();
+            await this.page.getByRole('option', { name: filters.userRole }).click();
+        }
+
+        if (filters.employeeName) {
+            await this.employeeNameFilterField.fill(filters.employeeName);
+
+            const firstSuggestion = this.page
+                .getByRole('option')
+                .filter({ hasNotText: 'Searching' })
+                .first();
+
+            await expect(firstSuggestion).toBeVisible();
+            await firstSuggestion.click();
+        }
+
+        if (filters.status) {
+            await this.statusFilterDropdown.click();
+            await this.page.getByRole('option', { name: filters.status }).click();
+        }
+
+        await this.searchButton.click();
+
+        await expect(
+            this.page.locator('.oxd-table')
+        ).toBeVisible();
+
     }
 
     async clearSearch(): Promise<void> {
@@ -193,9 +271,8 @@ export class AdminPage {
     async deleteFirstUser(): Promise<void> {
 
         await this.page
-            .locator('button')
-            .filter({ has: this.page.locator('.bi-trash') })
-            .first()
+            .getByRole('button')
+            .locator('.bi-trash')
             .click();
 
         await this.page

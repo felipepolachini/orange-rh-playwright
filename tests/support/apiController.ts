@@ -1,3 +1,6 @@
+const API_BASE_PATH = process.env.API_BASE_PATH ?? 'web/index.php/api/v2';
+
 export const ApiRoutes = {
-    adminUsers: process.env.BASE_URL ?? process.env.API_BASE_PATH  ?? '/admin/users',
+    adminUsers: `/${API_BASE_PATH}/admin/users`,
+    pimEmployees: `/${API_BASE_PATH}/pim/employees`,
 };
