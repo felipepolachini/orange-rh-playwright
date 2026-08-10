@@ -7,10 +7,11 @@ test.describe(('Admin - System Users'), ()=>{
         let createdUser: ApiCreatedUser | undefined;
 
         test.beforeEach(async ({ login, admin, adminApi }) => {
-            await login.navigate();
-            await admin.open();
 
             createdUser = await adminApi.createUser(buildUserData());
+
+            await login.navigate();
+            await admin.open();
 
         });
 

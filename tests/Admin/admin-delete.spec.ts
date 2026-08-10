@@ -1,0 +1,31 @@
+import { test, expect } from '../support';
+import { ApiCreatedUser } from '../support/api/adminApi';
+import { buildUserData } from '../support/data/admin/userController';
+
+test.describe(('Admin - System Users'), () => {
+
+    let createdUser: ApiCreatedUser | undefined;
+
+    test.beforeEach(async ({ login, admin, adminApi }) => {
+
+        createdUser = await adminApi.createUser(buildUserData());
+
+        await login.navigate();
+        await admin.open();
+
+    });
+
+
+    test('TC04: Deletar usuário', async ({ admin }) => {
+
+        await admin.deleteUserByUsername(createdUser!.username);
+
+        await admin.searchByUsername(createdUser!.username);
+
+        await expect(await admin.getUserRows()).toHaveCount(0);
+
+        createdUser = undefined;
+
+    });
+
+});

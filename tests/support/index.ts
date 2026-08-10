@@ -1,4 +1,5 @@
-import { expect, test as base, request as playwrightRequest} from '@playwright/test';
+import { expect, request as playwrightRequest } from '@playwright/test';
+import { test as base, pwApi } from 'pw-api-plugin';
 import { AdminPage } from './actions/admin';
 import { LoginPage } from './actions/login';
 import { DashboardPage } from './actions/dashboard';
@@ -24,7 +25,7 @@ export const test = base.extend<Fixtures>({
   dashboard: async ({ page }, use) => {
     await use(new DashboardPage(page));
   },
-  pimApi: async ({ request }, use) => {
+  pimApi: async ({ request, page }, use) => {
 
     const currentState = await request.storageState();
 
@@ -33,13 +34,13 @@ export const test = base.extend<Fixtures>({
       storageState: currentState,
     });
 
-    await use(new PimApi(apiContext));
+    await use(new PimApi(apiContext, page));
 
     await apiContext.dispose();
 
   },
-  
-  adminApi: async ({ request }, use) => {
+
+  adminApi: async ({ request, page }, use) => {
 
     const currentState = await request.storageState();
 
@@ -48,11 +49,11 @@ export const test = base.extend<Fixtures>({
       storageState: currentState,
     });
 
-    await use(new AdminApi(apiContext, new PimApi(apiContext)));
+    await use(new AdminApi(apiContext, page, new PimApi(apiContext, page)));
 
     await apiContext.dispose();
 
-},
+  },
 });
 
-export { expect };
+export { expect, pwApi };

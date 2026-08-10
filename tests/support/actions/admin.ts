@@ -22,7 +22,33 @@ export class AdminPage {
     }
 
     // ==========================
-    // Locators
+    // Locators — helpers de container por label
+    // ==========================
+
+    /**
+     * Container de campo dentro dos formulários Add/Edit User.
+     * Reaproveitado por todos os campos do formulário (User Role, Status,
+     * Username, Password, Confirm Password).
+     */
+    private formFieldContainer(label: string | RegExp): Locator {
+        return this.page
+            .locator('.oxd-input-group')
+            .filter({ hasText: label });
+    }
+
+    /**
+     * Container de campo dentro do formulário de busca (filtros).
+     * Reaproveitado por usernameFilterField, userRoleFilterDropdown,
+     * employeeNameFilterField e statusFilterDropdown.
+     */
+    private filterFieldContainer(label: string | RegExp): Locator {
+        return this.page
+            .locator('.oxd-grid-item')
+            .filter({ hasText: label });
+    }
+
+    // ==========================
+    // Locators — navegação e ações gerais
     // ==========================
 
     private get menuAdmin() {
@@ -31,41 +57,6 @@ export class AdminPage {
 
     private get heading() {
         return this.page.getByRole('heading', { name: 'Admin' });
-    }
-
-    private get usernameFilterField() {
-         return this.page
-            .locator('.oxd-grid-item')
-            .filter({ hasText: /^Username$/ })
-            .getByRole('textbox')
-    }
-
-    private get userRoleFilterDropdown() {
-        return this.page
-            .locator('.oxd-grid-item')
-            .filter({ hasText: /^User Role/ })
-            .locator('.oxd-select-text')
-    }
-
-    private get menuItemField() {
-         return this.page
-            .locator('.oxd-table-filter-area')
-            .getByRole('textbox')
-            .first();
-    }
-
-     private get employeeNameFilterField() {
-        return this.page
-            .locator('.oxd-grid-item')
-            .filter({ hasText: 'Employee Name' })
-            .getByRole('textbox', { name: 'Type for hints...' })
-    }
-
-    private get statusFilterDropdown() {
-        return this.page
-            .locator('.oxd-grid-item')
-            .filter({ hasText: 'Status' })
-            .locator('.oxd-select-text')
     }
 
     private get searchButton() {
@@ -93,6 +84,87 @@ export class AdminPage {
     }
 
     // ==========================
+    // Locators — filtros de busca
+    // ==========================
+
+    private get menuItemField() {
+        return this.usernameFilterField;
+    }
+
+    private get usernameFilterField() {
+        return this.filterFieldContainer(/^Username$/).getByRole('textbox');
+    }
+
+    private get userRoleFilterDropdown() {
+        return this.filterFieldContainer(/^User Role/).locator('.oxd-select-text');
+    }
+
+    private get employeeNameFilterField() {
+        return this.filterFieldContainer('Employee Name')
+            .getByRole('textbox', { name: 'Type for hints...' });
+    }
+
+    private get statusFilterDropdown() {
+        return this.filterFieldContainer('Status').locator('.oxd-select-text');
+    }
+
+    // ==========================
+    // Locators — formulário Add/Edit User
+    // ==========================
+
+    private get formUserRoleDropdown() {
+        return this.formFieldContainer('User Role').locator('.oxd-icon');
+    }
+
+    private get formStatusDropdown() {
+        return this.formFieldContainer('Status').locator('.oxd-icon');
+    }
+
+    private get formUsernameField() {
+        return this.formFieldContainer('Username').getByRole('textbox');
+    }
+
+    private get formPasswordField() {
+        return this.formFieldContainer(/^Password$/).locator('input[type=password]');
+    }
+
+    private get formConfirmPasswordField() {
+        return this.formFieldContainer(/^Confirm Password$/).locator('input[type=password]');
+    }
+
+    // ==========================
+    // Ações genéricas reutilizáveis
+    // ==========================
+
+    private async selectDropdownOption(trigger: Locator, optionName: string): Promise<void> {
+        await trigger.click();
+        await this.page.getByRole('option', { name: optionName }).click();
+    }
+
+    private async selectFirstAutocompleteSuggestion(field: Locator, value: string): Promise<void> {
+
+        await field.fill(value);
+
+        const firstSuggestion = this.page
+            .getByRole('option')
+            .filter({ hasNotText: 'Searching' })
+            .first();
+
+        await expect(firstSuggestion).toBeVisible();
+
+        await firstSuggestion.click();
+
+    }
+
+    private async waitForTableToLoad(): Promise<void> {
+        await expect(this.page.locator('.oxd-table')).toBeVisible();
+    }
+
+    private async clickFirstRowActionIcon(iconClass: string): Promise<void> {
+        await this.page.getByRole('button').locator(iconClass).first().click();
+    }
+
+    // ==========================
     // Navigation
     // ==========================
 
@@ -116,9 +188,7 @@ export class AdminPage {
 
         await this.searchButton.click();
 
-        await expect(
-            this.page.locator('.oxd-table')
-        ).toBeVisible();
+        await this.waitForTableToLoad();
 
     }
 
@@ -134,32 +204,20 @@ export class AdminPage {
         }
 
         if (filters.userRole) {
-            await this.userRoleFilterDropdown.click();
-            await this.page.getByRole('option', { name: filters.userRole }).click();
+            await this.selectDropdownOption(this.userRoleFilterDropdown, filters.userRole);
         }
 
         if (filters.employeeName) {
-            await this.employeeNameFilterField.fill(filters.employeeName);
-
-            const firstSuggestion = this.page
-                .getByRole('option')
-                .filter({ hasNotText: 'Searching' })
-                .first();
-
-            await expect(firstSuggestion).toBeVisible();
-            await firstSuggestion.click();
+            await this.selectFirstAutocompleteSuggestion(this.employeeNameFilterField, filters.employeeName);
         }
 
         if (filters.status) {
-            await this.statusFilterDropdown.click();
-            await this.page.getByRole('option', { name: filters.status }).click();
+            await this.selectDropdownOption(this.statusFilterDropdown, filters.status);
         }
 
         await this.searchButton.click();
 
-        await expect(
-            this.page.locator('.oxd-table')
-        ).toBeVisible();
+        await this.waitForTableToLoad();
 
     }
 
@@ -183,60 +241,19 @@ export class AdminPage {
             })
         ).toBeVisible();
 
-        // User Role
-        await this.page
-            .locator('.oxd-select-text')
-            .first()
-            .click();
+        await this.selectDropdownOption(this.formUserRoleDropdown, data.role);
 
-        await this.page
-            .getByRole('option', {
-                name: data.role
-            })
-            .click();
-
-        // Employee
         const employee = this.page.getByRole('textbox', { name: 'Type for hints...' });
 
-        await employee.fill(data.employeeName);
+        await this.selectFirstAutocompleteSuggestion(employee, data.employeeName);
 
-        const firstSuggestion = this.page
-            .getByRole('option')
-            .filter({ hasNotText: 'Searching' })
-            .first();
+        await this.selectDropdownOption(this.formStatusDropdown, data.status);
 
-        await expect(firstSuggestion).toBeVisible();
+        await this.formUsernameField.fill(data.username);
 
-        await firstSuggestion.click();
+        await this.formPasswordField.fill(data.password);
 
-        // Status
-        await this.page
-            .locator('.oxd-select-text')
-            .nth(1)
-            .click();
-
-        await this.page
-            .getByRole('option', {
-                name: data.status
-            })
-            .click();
-
-        // Username
-        await this.page
-            .locator("input.oxd-input")
-            .nth(1)
-            .fill(data.username);
-
-        // Password
-        await this.page
-            .locator('input[type=password]')
-            .first()
-            .fill(data.password);
-
-        await this.page
-            .locator('input[type=password]')
-            .nth(1)
-            .fill(data.password);
+        await this.formConfirmPasswordField.fill(data.password);
 
         await this.saveButton.click();
 
@@ -255,12 +272,28 @@ export class AdminPage {
     // ==========================
 
     async editFirstUser(): Promise<void> {
+        await this.clickFirstRowActionIcon('.bi-pencil-fill');
+    }
 
-        await this.page
-            .locator('button')
-            .filter({ has: this.page.locator('.bi-pencil-fill') })
-            .first()
-            .click();
+    async editUserStatus(username: string, newStatus: UserData['status']): Promise<void> {
+
+        await this.searchByUsername(username);
+
+        await this.assertUserExists(username);
+
+        await this.editFirstUser();
+
+        await expect(
+            this.page.getByRole('heading', { name: 'Edit User' })
+        ).toBeVisible();
+
+        await this.selectDropdownOption(this.formStatusDropdown, newStatus);
+
+        await this.saveButton.click();
+
+        await expect(
+            this.page.getByText('Successfully Updated')
+        ).toBeVisible();
 
     }
 
@@ -270,16 +303,13 @@ export class AdminPage {
 
     async deleteFirstUser(): Promise<void> {
 
-        await this.page
-            .getByRole('button')
-            .locator('.bi-trash')
-            .click();
+        await this.clickFirstRowActionIcon('.bi-trash');
 
-        await this.page
-            .getByRole('button', {
-                name: 'Yes, Delete'
-            })
-            .click();
+        const confirmDeleteButton = this.page.getByRole('button', { name: 'Yes, Delete' });
+
+        await expect(confirmDeleteButton).toBeVisible();
+
+        await confirmDeleteButton.click();
 
         await expect(
             this.page.getByText('Successfully Deleted')
@@ -291,6 +321,8 @@ export class AdminPage {
 
         await this.searchByUsername(username);
 
+        await this.assertUserExists(username);
+
         await this.deleteFirstUser();
 
     }
@@ -299,12 +331,15 @@ export class AdminPage {
         return this.userRows;
     }
 
-
     async getRecordCount(number: number) {
         await this.page.getByText(`(${number}) Records Found`)
     }
 
     async assertUserExists(username: string): Promise<void> {
         await expect(this.userRowByUsername(username)).toHaveCount(1);
+    }
+
+    async assertUserStatus(username: string, status: UserData['status']): Promise<void> {
+        await expect(this.userRowByUsername(username)).toContainText(status);
     }
 }

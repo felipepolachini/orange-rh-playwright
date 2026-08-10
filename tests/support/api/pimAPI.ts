@@ -1,4 +1,4 @@
-import { APIRequestContext } from '@playwright/test';
+import { ApiHelper } from '../apiHelpers';
 import { ApiRoutes } from '../apiController';
 
 export interface PimEmployee {
@@ -6,23 +6,22 @@ export interface PimEmployee {
     fullName: string;
 }
 
-export class PimApi {
+interface PimEmployeesResponse {
+    data: Array<{
+        empNumber: number;
+        firstName: string;
+        lastName: string;
+    }>;
+}
 
-    constructor(private readonly request: APIRequestContext) {
-        this.request = request;
-    }
+export class PimApi extends ApiHelper {
 
     async findExistingEmployee(searchTerm: string = 'a'): Promise<PimEmployee> {
 
-        const response = await this.request.get(ApiRoutes.pimEmployees, {
-            params: { nameOrId: searchTerm },
+        const body = await this.get<PimEmployeesResponse>(ApiRoutes.pimEmployees, {
+            nameOrId: searchTerm,
         });
 
-        if (!response.ok()) {
-            throw new Error(`Falha ao buscar funcionário existente via API: ${response.status()}`);
-        }
-
-        const body = await response.json();
         const employee = body.data?.[0];
 
         if (!employee) {
