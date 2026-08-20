@@ -1,8 +1,8 @@
-import { expect, request as playwrightRequest } from '@playwright/test';
-import { test as base, pwApi } from 'pw-api-plugin';
+import { test as base, expect, request as playwrightRequest } from '@playwright/test';
 import { AdminPage } from './actions/admin';
 import { LoginPage } from './actions/login';
 import { DashboardPage } from './actions/dashboard';
+import { PimPage } from './actions/pim';
 import { AdminApi } from './api/adminApi';
 import { PimApi } from './api/pimAPI';
 
@@ -10,6 +10,7 @@ import { PimApi } from './api/pimAPI';
 type Fixtures = {
   login: LoginPage;
   admin: AdminPage;
+  pim: PimPage;
   dashboard: DashboardPage;
   adminApi: AdminApi;
   pimApi: PimApi;
@@ -22,10 +23,13 @@ export const test = base.extend<Fixtures>({
   admin: async ({ page }, use) => {
     await use(new AdminPage(page));
   },
+  pim: async ({ page }, use) => {
+    await use(new PimPage(page));
+  },
   dashboard: async ({ page }, use) => {
     await use(new DashboardPage(page));
   },
-  pimApi: async ({ request, page }, use) => {
+  pimApi: async ({ request }, use) => {
 
     const currentState = await request.storageState();
 
@@ -34,13 +38,13 @@ export const test = base.extend<Fixtures>({
       storageState: currentState,
     });
 
-    await use(new PimApi(apiContext, page));
+    await use(new PimApi(apiContext));
 
     await apiContext.dispose();
 
   },
 
-  adminApi: async ({ request, page }, use) => {
+  adminApi: async ({ request }, use) => {
 
     const currentState = await request.storageState();
 
@@ -49,11 +53,11 @@ export const test = base.extend<Fixtures>({
       storageState: currentState,
     });
 
-    await use(new AdminApi(apiContext, page, new PimApi(apiContext, page)));
+    await use(new AdminApi(apiContext, new PimApi(apiContext)));
 
     await apiContext.dispose();
 
   },
 });
 
-export { expect, pwApi };
+export { expect };

@@ -2,7 +2,7 @@ import { test, expect } from '../support';
 import { ApiCreatedUser } from '../support/api/adminApi';
 import { buildUserData } from '../support/data/admin/userController';
 
-test.describe(('Admin - System Users'), () => {
+test.describe(('Admin - Delete Users'), () => {
 
     let createdUser: ApiCreatedUser | undefined;
 
@@ -16,7 +16,7 @@ test.describe(('Admin - System Users'), () => {
     });
 
 
-    test('TC04: Deletar usuário', async ({ admin }) => {
+    test('TC06: Delete existing user', async ({ admin }) => {
 
         await admin.deleteUserByUsername(createdUser!.username);
 

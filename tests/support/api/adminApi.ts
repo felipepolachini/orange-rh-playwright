@@ -1,4 +1,4 @@
-import { APIRequestContext, Page } from '@playwright/test';
+import { APIRequestContext } from '@playwright/test';
 import { ApiHelper } from '../apiHelpers';
 import { ApiRoutes } from '../apiController';
 import type { UserData } from '../data/admin/userController';
@@ -40,10 +40,10 @@ export class AdminApi extends ApiHelper {
 
     constructor(
         request: APIRequestContext,
-        page: Page,
         private readonly pimApi: PimApi
     ) {
-        super(request, page);
+        super(request);
+        this.pimApi = pimApi;
     }
 
     async findUserIdByUsername(username: string): Promise<number> {

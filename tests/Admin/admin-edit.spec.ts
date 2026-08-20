@@ -2,7 +2,7 @@ import { test, expect } from '../support';
 import { ApiCreatedUser } from '../support/api/adminApi';
 import { buildUserData } from '../support/data/admin/userController';
 
-test.describe(('Admin - System Users'), () => {
+test.describe(('Admin - Edit Users'), () => {
 
     let createdUser: ApiCreatedUser | undefined;
 
@@ -24,7 +24,7 @@ test.describe(('Admin - System Users'), () => {
 
     });
 
-    test('TC103: Editar usuário existente', async ({ admin }) => {
+    test('TC05: Edit existing user', async ({ admin }) => {
 
         await admin.editUserStatus(createdUser!.username, 'Disabled');
 
@@ -32,6 +32,6 @@ test.describe(('Admin - System Users'), () => {
 
         await admin.assertUserStatus(createdUser!.username, 'Disabled');
 
-    });
+    });     
 
 });

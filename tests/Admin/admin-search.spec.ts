@@ -2,7 +2,7 @@ import { test, expect } from '../support';
 import { ApiCreatedUser } from '../support/api/adminApi';
 import { buildUserData } from '../support/data/admin/userController';
 
-test.describe(('Admin - System Users'), ()=>{
+test.describe(('Admin - Search Users'), ()=>{
 
         let createdUser: ApiCreatedUser | undefined;
 
@@ -24,7 +24,7 @@ test.describe(('Admin - System Users'), ()=>{
 
         });
 
-        test('TC-01: View user list', async ({admin }) => {
+        test('TC-01: Should display the system users list', async ({admin }) => {
 
             await admin.searchMenuItem('Admin');
 
@@ -34,7 +34,7 @@ test.describe(('Admin - System Users'), ()=>{
 
         });
 
-        test('TC-03: Buscar usuário específico usando todos os filtros', async ({ admin }) => {
+        test('TC-02: Should search for a specific user using all filters', async ({ admin }) => {
 
             await admin.searchByAllFilters({
                 username: createdUser!.username,
