@@ -18,11 +18,12 @@ export class PimPage {
     // ==========================
 
     /**
-     * ATENÇÃO: assume a mesma estrutura de container (.oxd-grid-item para
-     * filtros, .oxd-input-group para formulários) usada no módulo Admin,
-     * já que ambos usam o mesmo framework de componentes (OXD). Não
-     * confirmado especificamente contra a tela de Employee List — rode
-     * `npx playwright codegen` nessa tela antes de confiar nisso.
+     * ATENÇÃO: existem dois helpers de container parecidos aqui
+     * (formFieldContainerFocus e formFieldContainer), usando estratégias
+     * diferentes (filter por label vs. getByPlaceholder). Nenhum dos dois
+     * foi confirmado contra o DOM real da tela de Employee. Recomendo
+     * rodar `npx playwright codegen` nessa tela e unificar num só, depois
+     * de confirmar qual funciona.
      */
     private formFieldContainerFocus(label: string | RegExp): Locator {
         return this.page
@@ -82,8 +83,14 @@ export class PimPage {
         return this.page.locator('.oxd-table-body').getByRole('row');
     }
 
-    private employeeRowByEmployeeId(employeeId: string): Locator {
-        return this.employeeRows.filter({ hasText: employeeId });
+    /**
+     * Linha da tabela filtrada por qualquer texto (nome ou employeeId).
+     * Usado como base para assertEmployeeExists e as ações que precisam
+     * localizar uma linha específica — não depende de qual campo você
+     * está usando como identificador.
+     */
+    private employeeRowByText(text: string): Locator {
+        return this.employeeRows.filter({ hasText: text });
     }
 
     // ==========================
@@ -149,10 +156,8 @@ export class PimPage {
 
     /**
      * ATENÇÃO: assume um ícone de lixeira (mesma classe do Admin) por
-     * linha da lista de funcionários. Não confirmado — a tela de Employee
-     * List pode ter uma estrutura de ações diferente (ex: checkbox +
-     * botão de exclusão em massa no topo, em vez de ícone por linha).
-     * Confirme no DevTools antes de rodar.
+     * linha da lista de funcionários. Não confirmado — confira no
+     * DevTools antes de rodar.
      */
     private rowActionIcon(row: Locator, iconClass: string): Locator {
         return row.getByRole('button').locator(iconClass);
@@ -171,17 +176,22 @@ export class PimPage {
     }
 
     /**
-     * ATENÇÃO: texto de sucesso assumido igual ao padrão do Admin
-     * ("Successfully Saved"/"Successfully Updated"/"Successfully
-     * Deleted"). Não confirmado especificamente para o módulo PIM.
+     * ATENÇÃO: texto de sucesso assumido igual ao padrão do Admin — não
+     * confirmado especificamente para o módulo PIM.
      */
     private async assertSuccessMessage(message: string): Promise<void> {
         await expect(this.page.getByText(message)).toBeVisible();
     }
 
-    private async searchAndConfirmEmployeeExists(employeeId: string): Promise<void> {
-        await this.searchByEmployeeId(employeeId);
-        await this.assertEmployeeExists(employeeId);
+    /**
+     * Busca por nome e confirma que o funcionário existe antes de agir
+     * sobre ele. Usa o filtro de Employee Name — funciona mesmo quando o
+     * funcionário não tem employeeId definido (caso de funcionários
+     * criados via API).
+     */
+    async searchAndConfirmEmployeeExists(identifier: string): Promise<void> {
+        await this.searchByAllFilters({ employeeName: identifier });
+        await this.assertEmployeeExists(identifier);
     }
 
     // ==========================
@@ -198,7 +208,7 @@ export class PimPage {
 
     async openEmployeeList(): Promise<void> {
 
-        await this.menuEmployeeList.click();    
+        await this.menuEmployeeList.click();
     }
 
     // ==========================
@@ -207,6 +217,10 @@ export class PimPage {
 
     async searchByEmployeeId(employeeId: string): Promise<void> {
         await this.searchByAllFilters({ employeeId });
+    }
+
+    async searchByEmployeeName(employeeName: string): Promise<void> {
+        await this.searchByAllFilters({ employeeName });
     }
 
     async searchByAllFilters(filters: EmployeeSearchFilters): Promise<void> {
@@ -240,13 +254,6 @@ export class PimPage {
     // Create Employee
     // ==========================
 
-    /**
-     * ATENÇÃO: o fluxo de "Add Employee" no OrangeHRM normalmente é uma
-     * navegação de página inteira (não um modal, como no Add User do
-     * Admin), e o Employee Id costuma vir pré-preenchido automaticamente
-     * pelo sistema — pode ser necessário limpar o campo antes de digitar
-     * o valor desejado. Não confirmado contra a tela real.
-     */
     async createEmployee(data: EmployeeData): Promise<string> {
 
         await this.addButton.click();
@@ -274,16 +281,15 @@ export class PimPage {
     // ==========================
 
     /**
-     * ATENÇÃO: assume que clicar na linha do funcionário (ou num link com
-     * o nome dele) navega para a aba "Personal Details", onde o Employee
-     * Id pode ser editado. Não confirmado — pode ser necessário um
-     * locator mais específico pro link do nome, em vez da linha inteira.
+     * Busca o funcionário pelo NOME (searchIdentifier) — funciona mesmo
+     * que o employeeId atual seja null — e edita o Employee Id dele para
+     * newEmployeeId.
      */
-    async editEmployeeId(currentEmployeeId: string, newEmployeeId: string): Promise<void> {
+    async editEmployeeId(searchIdentifier: string, newEmployeeId: string): Promise<void> {
 
-        await this.searchAndConfirmEmployeeExists(currentEmployeeId);
+        await this.searchAndConfirmEmployeeExists(searchIdentifier);
 
-        await this.employeeRowByEmployeeId(currentEmployeeId).click();
+        await this.employeeRowByText(searchIdentifier).click();
 
         await expect(
             this.page.getByRole('heading', { name: 'Personal Details' })
@@ -303,11 +309,15 @@ export class PimPage {
     // Delete Employee
     // ==========================
 
-    async deleteEmployeeByEmployeeId(employeeId: string): Promise<void> {
+    /**
+     * Busca o funcionário pelo NOME e deleta — funciona mesmo com
+     * employeeId null (funcionários criados via API).
+     */
+    async deleteEmployee(searchIdentifier: string): Promise<void> {
 
-        await this.searchAndConfirmEmployeeExists(employeeId);
+        await this.searchAndConfirmEmployeeExists(searchIdentifier);
 
-        const row = this.employeeRowByEmployeeId(employeeId);
+        const row = this.employeeRowByText(searchIdentifier);
 
         await this.rowActionIcon(row, '.oxd-icon.bi-trash').click();
 
@@ -323,8 +333,8 @@ export class PimPage {
         return this.employeeRows;
     }
 
-    async assertEmployeeExists(employeeId: string): Promise<void> {
-        await expect(this.employeeRowByEmployeeId(employeeId)).toHaveCount(1);
+    async assertEmployeeExists(identifier: string): Promise<void> {
+        await expect(this.employeeRowByText(identifier)).toHaveCount(1);
     }
 
 }

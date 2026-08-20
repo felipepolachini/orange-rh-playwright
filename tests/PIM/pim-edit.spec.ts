@@ -18,7 +18,7 @@ test.describe('PIM - Employee Information', () => {
     test.afterEach(async ({ pimApi }) => {
 
         if (createdEmployee) {
-            await pimApi.deleteEmployeeByEmployeeId(createdEmployee.employeeId);
+            await pimApi.deleteEmployeeByEmpNumber(createdEmployee.empNumber);
             createdEmployee = undefined;
         }
 
@@ -28,14 +28,10 @@ test.describe('PIM - Employee Information', () => {
 
         const newEmployeeId = `QA${Date.now()}`;
 
-        await pim.editEmployeeId(createdEmployee!.employeeId, newEmployeeId);
+        await pim.editEmployeeId(createdEmployee!.fullName, newEmployeeId);
 
-        createdEmployee!.employeeId = newEmployeeId; // afterEach precisa limpar pelo id novo
-
-        await pim.searchByEmployeeId(newEmployeeId);
-
-        await pim.assertEmployeeExists(newEmployeeId);
-
+        await pim.openEmployeeList();
+        await pim.searchAndConfirmEmployeeExists(createdEmployee!.fullName);
     });
 
 });

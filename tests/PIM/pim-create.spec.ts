@@ -1,7 +1,7 @@
 import { test, expect } from '../support';
 import { buildEmployeeData } from '../support/data/pim/employeeController';
 
-test.describe('PIM - Employee Information', () => {
+test.describe('PIM - Add Employee Information', () => {
 
     let createdEmployeeId: string | undefined;
 

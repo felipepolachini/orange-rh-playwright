@@ -18,7 +18,7 @@ test.describe('PIM - Employee Information', () => {
     test.afterEach(async ({ pimApi }) => {
 
         if (createdEmployee) {
-            await pimApi.deleteEmployeeByEmployeeId(createdEmployee.employeeId);
+            await pimApi.deleteEmployeeByEmpNumber(createdEmployee.empNumber);
             createdEmployee = undefined;
         }
 
@@ -26,20 +26,19 @@ test.describe('PIM - Employee Information', () => {
 
     test('TC201: Visualizar lista de funcionários', async ({ pim }) => {
 
-        await pim.searchByEmployeeId(createdEmployee!.employeeId);
+        await pim.searchByAllFilters({ employeeName: createdEmployee!.fullName });
 
         await expect(await pim.getEmployeeRows()).not.toHaveCount(0);
 
     });
 
-    test('TC202: Buscar funcionário usando todos os filtros', async ({ pim }) => {
+    test('TC202: Buscar funcionário usando filtro de nome', async ({ pim }) => {
 
         await pim.searchByAllFilters({
             employeeName: createdEmployee!.fullName,
-            employeeId: createdEmployee!.employeeId,
         });
 
-        await pim.assertEmployeeExists(createdEmployee!.employeeId);
+        await pim.assertEmployeeExists(createdEmployee!.fullName);
 
     });
 

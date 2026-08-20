@@ -10,7 +10,7 @@ export interface PimEmployee {
 
 export interface ApiCreatedEmployee {
     empNumber: number;
-    employeeId: string;
+    employeeId: string | null;
     fullName: string;
 }
 
@@ -24,14 +24,17 @@ interface PimEmployeesResponse {
 }
 
 /**
- * ATENÇÃO: schema de resposta assumido — não confirmado contra uma
- * chamada real de POST /pim/employees. Se retornar 400/422, confira no
- * DevTools o payload exato que a UI envia ao criar um funcionário.
+ * CONFIRMADO (via bug real): o campo "employeeId" não é definido na
+ * criação via POST /pim/employees com apenas firstName/lastName — a
+ * resposta retorna employeeId: null. Não sabemos ainda COMO o employeeId
+ * é atribuído (talvez exija outro campo no payload, ou um PUT separado em
+ * /personal-details) — confirme no DevTools se precisar de um employeeId
+ * não-nulo logo após a criação via API.
  */
 interface CreateEmployeeResponse {
     data: {
         empNumber: number;
-        employeeId: string;
+        employeeId: string | null;
         firstName: string;
         lastName: string;
     };
@@ -63,9 +66,31 @@ export class PimApi extends ApiHelper {
     }
 
     /**
-     * ATENÇÃO: assume que "nameOrId" também casa com employeeId (o nome
-     * do parâmetro sugere isso, mas não foi testado especificamente com
-     * um employeeId como termo de busca).
+     * Busca por nome — mais confiável que buscar por employeeId, já que
+     * este pode ser null para funcionários recém-criados via API.
+     */
+    async findEmployeeByFullName(fullName: string): Promise<{ empNumber: number }> {
+
+        const body = await this.get<PimEmployeesResponse>(ApiRoutes.pimEmployees, {
+            nameOrId: fullName,
+        });
+
+        const employee = body.data?.find(e =>
+            [e.firstName, e.lastName].filter(Boolean).join(' ') === fullName
+        );
+
+        if (!employee) {
+            throw new Error(`Funcionário com nome "${fullName}" não encontrado via API.`);
+        }
+
+        return { empNumber: employee.empNumber };
+    }
+
+    /**
+     * ATENÇÃO: só funciona se o funcionário tiver um employeeId não-nulo.
+     * Para funcionários criados via createEmployee() (API), o employeeId
+     * vem null — use findEmployeeByFullName() ou o empNumber retornado
+     * por createEmployee() nesse caso.
      */
     async findEmployeeByEmployeeId(employeeId: string): Promise<{ empNumber: number }> {
 
@@ -83,10 +108,9 @@ export class PimApi extends ApiHelper {
     }
 
     /**
-     * ATENÇÃO: payload assumido (firstName, lastName, employeeId) — não
-     * confirmado contra uma chamada real. Confirme no DevTools antes de
-     * confiar em CI (mesmo processo que usamos pra confirmar o payload de
-     * criação de usuário no Admin).
+     * ATENÇÃO: payload confirmado como aceito pela API (firstName,
+     * lastName) — mas o employeeId retornado na resposta vem null, não o
+     * valor de EmployeeData.employeeId (que hoje não é enviado).
      */
     async createEmployee(data: EmployeeData): Promise<ApiCreatedEmployee> {
 
@@ -105,15 +129,24 @@ export class PimApi extends ApiHelper {
     }
 
     /**
-     * ATENÇÃO: assume o mesmo formato de exclusão do admin/users
-     * ({ ids: [empNumber] }) — não confirmado para este endpoint
-     * especificamente.
+     * Forma recomendada de deletar: usa empNumber diretamente (você já
+     * tem esse valor a partir do retorno de createEmployee() ou
+     * findExistingEmployee()), sem depender de employeeId.
+     */
+    async deleteEmployeeByEmpNumber(empNumber: number): Promise<void> {
+        await this.delete(ApiRoutes.pimEmployees, { ids: [empNumber] });
+    }
+
+    /**
+     * ATENÇÃO: só funciona se o funcionário tiver um employeeId não-nulo
+     * (ex: criado via UI, onde o campo é preenchido de verdade). Prefira
+     * deleteEmployeeByEmpNumber() quando já tiver o empNumber em mãos.
      */
     async deleteEmployeeByEmployeeId(employeeId: string): Promise<void> {
 
         const { empNumber } = await this.findEmployeeByEmployeeId(employeeId);
 
-        await this.delete(ApiRoutes.pimEmployees, { ids: [empNumber] });
+        await this.deleteEmployeeByEmpNumber(empNumber);
 
     }
 

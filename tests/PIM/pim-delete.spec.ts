@@ -18,7 +18,7 @@ test.describe('PIM - Employee Information', () => {
     test.afterEach(async ({ pimApi }) => {
 
         if (createdEmployee) {
-            await pimApi.deleteEmployeeByEmployeeId(createdEmployee.employeeId).catch(() => {});
+            await pimApi.deleteEmployeeByEmpNumber(createdEmployee.empNumber).catch(() => {});
             createdEmployee = undefined;
         }
 
@@ -26,9 +26,9 @@ test.describe('PIM - Employee Information', () => {
 
     test('TC205: Deletar funcionário', async ({ pim }) => {
 
-        await pim.deleteEmployeeByEmployeeId(createdEmployee!.employeeId);
+        await pim.deleteEmployee(createdEmployee!.fullName);
 
-        await pim.searchByEmployeeId(createdEmployee!.employeeId);
+        await pim.searchByEmployeeName(createdEmployee!.fullName);
 
         await expect(await pim.getEmployeeRows()).toHaveCount(0);
 
