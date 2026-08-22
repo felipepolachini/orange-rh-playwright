@@ -183,13 +183,16 @@ export class PimPage {
         await expect(this.page.getByText(message)).toBeVisible();
     }
 
-    /**
-     * Busca por nome e confirma que o funcionário existe antes de agir
-     * sobre ele. Usa o filtro de Employee Name — funciona mesmo quando o
-     * funcionário não tem employeeId definido (caso de funcionários
-     * criados via API).
-     */
-    async searchAndConfirmEmployeeExists(identifier: string): Promise<void> {
+
+    private fieldErrorByPlaceholder(placeholder: string, message: string): Locator {
+        return this.page
+            .getByPlaceholder(placeholder)
+            .locator('../..')
+            .getByText(message);
+    }
+
+
+    private async searchAndConfirmEmployeeExists(identifier: string): Promise<void> {
         await this.searchByAllFilters({ employeeName: identifier });
         await this.assertEmployeeExists(identifier);
     }
@@ -254,13 +257,17 @@ export class PimPage {
     // Create Employee
     // ==========================
 
-    async createEmployee(data: EmployeeData): Promise<string> {
+    private async openAddEmployeeForm(): Promise<void> {
 
         await this.addButton.click();
 
-        await expect(
-            this.page.getByRole('heading', { name: 'Add Employee' })
-        ).toBeVisible();
+        await this.assertAddEmployeeFormStillOpen();
+
+    }
+
+    async createEmployee(data: EmployeeData): Promise<string> {
+
+        await this.openAddEmployeeForm();
 
         await this.formFirstNameField.fill(data.firstName);
 
@@ -335,6 +342,24 @@ export class PimPage {
 
     async assertEmployeeExists(identifier: string): Promise<void> {
         await expect(this.employeeRowByText(identifier)).toHaveCount(1);
+    }
+
+    async submitEmptyAddEmployeeForm(): Promise<void> {
+
+        await this.openAddEmployeeForm();
+
+        await this.saveButton.click();
+
+    }
+
+    async assertFieldRequiredByPlaceholder(placeholder: string): Promise<void> {
+        await expect(this.fieldErrorByPlaceholder(placeholder, 'Required')).toBeVisible();
+    }
+
+    async assertAddEmployeeFormStillOpen(): Promise<void> {
+        await expect(
+            this.page.getByRole('heading', { name: 'Add Employee' })
+        ).toBeVisible();
     }
 
 }

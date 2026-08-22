@@ -32,4 +32,16 @@ test.describe('PIM - Add Employee Information', () => {
 
     });
 
+     test('TC211: Campo First Name e Last Name é obrigatório', async ({ pim }) => {
+
+        await pim.submitEmptyAddEmployeeForm();
+
+        await pim.assertFieldRequiredByPlaceholder('First Name');
+        await pim.assertFieldRequiredByPlaceholder('Last Name');
+
+        await pim.assertAddEmployeeFormStillOpen();
+
+    });
+
+
 });
