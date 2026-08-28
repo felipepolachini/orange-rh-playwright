@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "run_tests": "npx playwright test",
-    "run_tests_headless": "npx playwright test --headed",
+    "run_tests_headed": "npx playwright test --headed",
     "run_tests_debug": "npx playwright test --debug",
     "run_tests_ui": "npx playwright test --ui"
   },
