@@ -13,18 +13,6 @@ export class PimPage {
         this.page = page;
     }
 
-    // ==========================
-    // Locators — helpers de container por label
-    // ==========================
-
-    /**
-     * ATENÇÃO: existem dois helpers de container parecidos aqui
-     * (formFieldContainerFocus e formFieldContainer), usando estratégias
-     * diferentes (filter por label vs. getByPlaceholder). Nenhum dos dois
-     * foi confirmado contra o DOM real da tela de Employee. Recomendo
-     * rodar `npx playwright codegen` nessa tela e unificar num só, depois
-     * de confirmar qual funciona.
-     */
     private formFieldContainerFocus(label: string | RegExp): Locator {
         return this.page
             .locator('.oxd-input-group')
@@ -46,10 +34,6 @@ export class PimPage {
     private filterDropdown(label: string | RegExp): Locator {
         return this.filterFieldContainer(label).locator('.oxd-select-text');
     }
-
-    // ==========================
-    // Locators — navegação e ações gerais
-    // ==========================
 
     private get menuPim() {
         return this.page.getByRole('link', { name: 'PIM' });
@@ -83,19 +67,9 @@ export class PimPage {
         return this.page.locator('.oxd-table-body').getByRole('row');
     }
 
-    /**
-     * Linha da tabela filtrada por qualquer texto (nome ou employeeId).
-     * Usado como base para assertEmployeeExists e as ações que precisam
-     * localizar uma linha específica — não depende de qual campo você
-     * está usando como identificador.
-     */
     private employeeRowByText(text: string): Locator {
         return this.employeeRows.filter({ hasText: text });
     }
-
-    // ==========================
-    // Locators — filtros de busca
-    // ==========================
 
     private get employeeNameFilterField() {
         return this.filterFieldContainer('Employee Name')
@@ -110,10 +84,6 @@ export class PimPage {
         return this.filterDropdown('Employment Status');
     }
 
-    // ==========================
-    // Locators — formulário Add Employee / Personal Details
-    // ==========================
-
     private get formFirstNameField() {
         return this.formFieldContainer('First Name');
     }
@@ -125,10 +95,6 @@ export class PimPage {
     private get formEmployeeIdField() {
         return this.formFieldContainerFocus(/^Employee Id$/).getByRole('textbox')
     }
-
-    // ==========================
-    // Ações genéricas reutilizáveis
-    // ==========================
 
     private async selectDropdownOption(trigger: Locator, optionName: string): Promise<void> {
         await trigger.click();
@@ -151,14 +117,9 @@ export class PimPage {
     }
 
     private async waitForTableToLoad(): Promise<void> {
-        await expect(this.page.locator('.oxd-table')).toBeVisible();
+        await expect(this.page.locator('.orangehrm-container').getByRole('table')).toBeVisible();
     }
 
-    /**
-     * ATENÇÃO: assume um ícone de lixeira (mesma classe do Admin) por
-     * linha da lista de funcionários. Não confirmado — confira no
-     * DevTools antes de rodar.
-     */
     private rowActionIcon(row: Locator, iconClass: string): Locator {
         return row.getByRole('button').locator(iconClass);
     }
@@ -175,14 +136,9 @@ export class PimPage {
 
     }
 
-    /**
-     * ATENÇÃO: texto de sucesso assumido igual ao padrão do Admin — não
-     * confirmado especificamente para o módulo PIM.
-     */
     private async assertSuccessMessage(message: string): Promise<void> {
         await expect(this.page.getByText(message)).toBeVisible();
     }
-
 
     private fieldErrorByPlaceholder(placeholder: string, message: string): Locator {
         return this.page
@@ -191,15 +147,10 @@ export class PimPage {
             .getByText(message);
     }
 
-
     private async searchAndConfirmEmployeeExists(identifier: string): Promise<void> {
         await this.searchByAllFilters({ employeeName: identifier });
         await this.assertEmployeeExists(identifier);
     }
-
-    // ==========================
-    // Navigation
-    // ==========================
 
     async open(): Promise<void> {
 
@@ -213,10 +164,6 @@ export class PimPage {
 
         await this.menuEmployeeList.click();
     }
-
-    // ==========================
-    // Search
-    // ==========================
 
     async searchByEmployeeId(employeeId: string): Promise<void> {
         await this.searchByAllFilters({ employeeId });
@@ -253,10 +200,6 @@ export class PimPage {
 
     }
 
-    // ==========================
-    // Create Employee
-    // ==========================
-
     private async openAddEmployeeForm(): Promise<void> {
 
         await this.addButton.click();
@@ -283,15 +226,6 @@ export class PimPage {
 
     }
 
-    // ==========================
-    // Edit Employee
-    // ==========================
-
-    /**
-     * Busca o funcionário pelo NOME (searchIdentifier) — funciona mesmo
-     * que o employeeId atual seja null — e edita o Employee Id dele para
-     * newEmployeeId.
-     */
     async editEmployeeId(searchIdentifier: string, newEmployeeId: string): Promise<void> {
 
         await this.searchAndConfirmEmployeeExists(searchIdentifier);
@@ -312,14 +246,6 @@ export class PimPage {
 
     }
 
-    // ==========================
-    // Delete Employee
-    // ==========================
-
-    /**
-     * Busca o funcionário pelo NOME e deleta — funciona mesmo com
-     * employeeId null (funcionários criados via API).
-     */
     async deleteEmployee(searchIdentifier: string): Promise<void> {
 
         await this.searchAndConfirmEmployeeExists(searchIdentifier);
@@ -331,10 +257,6 @@ export class PimPage {
         await this.confirmDeletion();
 
     }
-
-    // ==========================
-    // Assertions
-    // ==========================
 
     async getEmployeeRows() {
         return this.employeeRows;
@@ -352,7 +274,7 @@ export class PimPage {
 
     }
 
-    async assertFieldRequiredByPlaceholder(placeholder: string): Promise<void> {
+    async assertFieldRequired(placeholder: string): Promise<void> {
         await expect(this.fieldErrorByPlaceholder(placeholder, 'Required')).toBeVisible();
     }
 
@@ -360,6 +282,20 @@ export class PimPage {
         await expect(
             this.page.getByRole('heading', { name: 'Add Employee' })
         ).toBeVisible();
+    }
+
+    async assertAllRowsHaveEmploymentStatus(status: string): Promise<void> {
+
+        await expect(this.employeeRows.first()).toBeVisible();
+
+        const rowsWithoutStatus = this.employeeRows.filter({ hasNotText: status });
+
+        await expect(rowsWithoutStatus).toHaveCount(0);
+
+    }
+
+    async assertNoRecordsFound(): Promise<void> {
+        await expect(this.page.locator('#oxd-toaster_1').getByText('No Records Found')).toBeVisible();
     }
 
 }

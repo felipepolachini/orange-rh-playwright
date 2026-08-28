@@ -38,7 +38,8 @@ export default defineConfig({
     /* Base URL to use in actions like `await page.goto('')`. */
     baseURL: process.env.BASE_URL ,
     navigationTimeout: 45_000,        
-    actionTimeout: 15_000,            
+    actionTimeout: 15_000, 
+    locale: 'en-US'           
     
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
   },
@@ -54,7 +55,8 @@ export default defineConfig({
       use: {
          ...devices['Desktop Chrome'],
          baseURL: process.env.BASE_URL,
-         storageState: process.env.STORAGE_STATE_PATH 
+         storageState: process.env.STORAGE_STATE_PATH,
+         locale: 'en-US'
       },
       
       dependencies: ['setup'],

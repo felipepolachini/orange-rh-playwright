@@ -19,7 +19,7 @@ test.describe('PIM - Add Employee Information', () => {
 
     });
 
-    test('TC203: Adicionar novo funcionário com dados válidos', async ({ pim }) => {
+    test('TC204: Add new employee with valid data', async ({ pim }) => {
 
         const employeeData = buildEmployeeData();
 
@@ -32,16 +32,25 @@ test.describe('PIM - Add Employee Information', () => {
 
     });
 
-     test('TC211: Campo First Name e Last Name é obrigatório', async ({ pim }) => {
+});
+
+test.describe('PIM - Add Employee Form Validation', () => {
+
+    test.beforeEach(async ({ login, pim }) => {
+        await login.navigate();
+        await pim.open();
+    });
+
+
+    test('TC205: First Name and Last Name fields are required', async ({ pim }) => {
 
         await pim.submitEmptyAddEmployeeForm();
 
-        await pim.assertFieldRequiredByPlaceholder('First Name');
-        await pim.assertFieldRequiredByPlaceholder('Last Name');
+        await pim.assertFieldRequired('First Name');
+        await pim.assertFieldRequired('Last Name');
 
         await pim.assertAddEmployeeFormStillOpen();
 
     });
 
-
-});
+})

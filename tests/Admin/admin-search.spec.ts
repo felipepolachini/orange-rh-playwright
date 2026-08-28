@@ -24,17 +24,19 @@ test.describe(('Admin - Search Users'), ()=>{
 
         });
 
-        test('TC-01: Should display the system users list', async ({admin }) => {
+        test('TC101: Should display the system users list', async ({ admin }) => {
 
-            await admin.searchMenuItem('Admin');
+            await admin.searchByUsername(createdUser!.username);
 
-            await expect(await admin.getUserRows()).not.toHaveCount(0);
+            await expect(await admin.getUserRows()).toHaveCount(1);
+
+            await admin.assertAllRowsHaveUserData(createdUser!.username);
 
             await admin.getRecordCount(await (await admin.getUserRows()).count());
 
         });
 
-        test('TC-02: Should search for a specific user using all filters', async ({ admin }) => {
+        test('TC102: Should search for a specific user using all filters', async ({ admin }) => {
 
             await admin.searchByAllFilters({
                 username: createdUser!.username,
@@ -44,9 +46,23 @@ test.describe(('Admin - Search Users'), ()=>{
             });
 
             await admin.assertUserExists(createdUser!.username);
+            await admin.assertUserExists(createdUser!.role);
+            await admin.assertUserExists(createdUser!.employeeName);
+            await admin.assertUserExists(createdUser!.status);
 
         });
 
+        test('TC103: Filter users by User Role', async ({ admin }) => {
+
+            await admin.searchByAllFilters({ userRole: createdUser!.role });
+
+            await admin.assertAllRowsHaveUserData(createdUser!.role);
+
+            await admin.getRecordCount(await (await admin.getUserRows()).count());
+
+        });
 
 })
+
+
 

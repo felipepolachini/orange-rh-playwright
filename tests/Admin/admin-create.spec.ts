@@ -17,7 +17,7 @@ test.describe('Admin - Create System User', () => {
         }
     });
 
-    test('TC-03: Should add a new user with valid data', async ({ admin }) => {
+    test('TC104: Should add a new user with valid data', async ({ admin }) => {
 
         const userData = buildUserData();
 
@@ -37,7 +37,7 @@ test.describe('Admin - Add User Form Validation', () => {
         await admin.open();
     });
 
-    test('TC-04: Should display required field validation for mandatory fields', async ({ admin }) => {
+    test('TC105: Should display required field validation for mandatory fields', async ({ admin }) => {
 
         await admin.submitEmptyAddUserForm();
 

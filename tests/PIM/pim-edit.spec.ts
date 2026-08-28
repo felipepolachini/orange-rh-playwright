@@ -24,14 +24,15 @@ test.describe('PIM - Edit Employee Information', () => {
 
     });
 
-    test('TC204: Editar funcionário existente', async ({ pim }) => {
+    test('TC206: Edit existing employee', async ({ pim }) => {
 
         const newEmployeeId = `QA${Date.now()}`;
 
         await pim.editEmployeeId(createdEmployee!.fullName, newEmployeeId);
 
         await pim.openEmployeeList();
-        await pim.searchAndConfirmEmployeeExists(createdEmployee!.fullName);
+        await pim.searchByEmployeeName(createdEmployee!.fullName);
+        await pim.assertEmployeeExists(createdEmployee!.fullName);
     });
 
 });

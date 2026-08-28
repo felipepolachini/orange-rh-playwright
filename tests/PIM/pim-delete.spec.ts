@@ -24,7 +24,7 @@ test.describe('PIM - Delete Employee Information', () => {
 
     });
 
-    test('TC205: Deletar funcionário', async ({ pim }) => {
+    test('TC207: Delete employee', async ({ pim }) => {
 
         await pim.deleteEmployee(createdEmployee!.fullName);
 

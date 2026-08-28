@@ -16,7 +16,7 @@ test.describe(('Admin - Delete Users'), () => {
     });
 
 
-    test('TC06: Delete existing user', async ({ admin }) => {
+    test('TC106: Delete existing user', async ({ admin }) => {
 
         await admin.deleteUserByUsername(createdUser!.username);
 

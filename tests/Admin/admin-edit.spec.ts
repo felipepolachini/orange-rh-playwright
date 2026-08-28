@@ -8,7 +8,7 @@ test.describe(('Admin - Edit Users'), () => {
 
     test.beforeEach(async ({ login, admin, adminApi }) => {
 
-        createdUser = await adminApi.createUser(buildUserData({ status: 'Enabled' }));
+        createdUser = await adminApi.createUser(buildUserData({ status: 'Enabled', role: 'ESS' }));
 
         await login.navigate();
         await admin.open();
@@ -24,11 +24,15 @@ test.describe(('Admin - Edit Users'), () => {
 
     });
 
-    test('TC05: Edit existing user', async ({ admin }) => {
+    test('TC107: Edit existing user', async ({ admin }) => {
 
         await admin.editUserStatus(createdUser!.username, 'Disabled');
 
-        await admin.searchByUsername(createdUser!.username);
+        await admin.searchByAllFilters({
+            username: createdUser!.username,
+            userRole: createdUser!.role,
+            employeeName: createdUser!.employeeName
+        });
 
         await admin.assertUserStatus(createdUser!.username, 'Disabled');
 
