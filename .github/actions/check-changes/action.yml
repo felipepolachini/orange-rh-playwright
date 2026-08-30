@@ -1,10 +1,12 @@
 name: 'Check for Changes'
+
 description: 'Check for relevant changes in tests, config, and dependencies'
 
 inputs:
   event-name:
     description: 'GitHub event name'
     required: true
+
   base-ref:
     description: 'Base reference for pull request'
     required: false
@@ -17,37 +19,29 @@ outputs:
 
 runs:
   using: 'composite'
-  steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
+  steps:
     - name: 🔍 Check for relevant changes
       id: check
       shell: bash
       run: |
-        # If pull request to main, always run
         if [[ "${{ inputs.event-name }}" == "pull_request" && "${{ inputs.base-ref }}" == "main" ]]; then
-          echo "should-run=true" >> $GITHUB_OUTPUT
+          echo "should-run=true" >> "$GITHUB_OUTPUT"
           echo "Reason: Pull request to main"
-        
-        # If workflow_dispatch, always run
+
         elif [[ "${{ inputs.event-name }}" == "workflow_dispatch" ]]; then
-          echo "should-run=true" >> $GITHUB_OUTPUT
+          echo "should-run=true" >> "$GITHUB_OUTPUT"
           echo "Reason: Manual trigger (workflow_dispatch)"
-        
-        # If push, check for changes in relevant paths
+
         else
           echo "Checking for changes in: tests/, playwright.config.ts, package.json"
-          git diff origin/main..HEAD --quiet -- tests/ playwright.config.ts package.json
-          
-          if [ $? -ne 0 ]; then
-            echo "should-run=true" >> $GITHUB_OUTPUT
-            echo "Reason: Changes detected in relevant paths"
-          else
-            echo "should-run=false" >> $GITHUB_OUTPUT
+
+          if git diff origin/main..HEAD --quiet -- tests/ playwright.config.ts package.json; then
+            echo "should-run=false" >> "$GITHUB_OUTPUT"
             echo "Reason: No changes in relevant paths - skipping tests"
+          else
+            echo "should-run=true" >> "$GITHUB_OUTPUT"
+            echo "Reason: Changes detected in relevant paths"
           fi
         fi
 
