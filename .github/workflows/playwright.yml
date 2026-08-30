@@ -1,27 +1,171 @@
-name: Playwright Tests
+name: 🎭 Playwright Automation Tests
+
 on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Test environment'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+        default: production
+      headed:
+        description: 'Run in headed mode (browser visible)'
+        required: false
+        type: boolean
+        default: false
+      debug:
+        description: 'Run in debug mode'
+        required: false
+        type: boolean
+        default: false
+
   push:
-    branches: [ main, master ]
+    branches:
+      - '**'
+
   pull_request:
-    branches: [ main, master ]
+    branches:
+      - main
+
+env:
+  NODE_VERSION: '20.x'
+  PLAYWRIGHT_VERSION: '1.61.1'
+  CI: true
+
 jobs:
-  test:
-    timeout-minutes: 60
+  check-changes:
+    name: 🔍 Check for Changes
     runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.check-changes-action.outputs.should-run }}
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-    - name: Install dependencies
-      run: npm ci
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-    - name: Run Playwright tests
-      run: npx playwright test
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+      # COMPOSITE ACTION: Check for Changes
+      - name: Check for relevant changes
+        id: check-changes-action
+        uses: ./.github/actions/check-changes
+        with:
+          event-name: ${{ github.event_name }}
+          base-ref: ${{ github.base_ref }}
+
+  test:
+    name: 🧪 Run Playwright Tests
+    runs-on: ubuntu-latest
+    needs: check-changes
+    if: |
+      needs.check-changes.outputs.should-run == 'true' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'workflow_dispatch'
+    
+    timeout-minutes: 60
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium]
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: 💾 Cache Playwright Browsers
+        id: playwright-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}-${{ matrix.browser }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}-
+            ${{ runner.os }}-playwright-
+
+      - name: 📥 Install npm dependencies
+        run: npm ci
+
+      - name: 🌐 Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      # COMPOSITE ACTION: Setup Environment
+      - name: ⚙️ Setup Environment
+        uses: ./.github/actions/setup-environment
+        with:
+          admin-username: ${{ secrets.ADMIN_USERNAME || 'Admin' }}
+          admin-password: ${{ secrets.ADMIN_PASSWORD || 'admin123' }}
+          base-url: ${{ secrets.BASE_URL || 'https://opensource-demo.orangehrmlive.com/' }}
+          environment: ${{ inputs.environment || 'production' }}
+
+      # COMPOSITE ACTION: Run Tests
+      - name: 🎭 Run Playwright Tests
+        uses: ./.github/actions/run-tests
+        with:
+          test-mode: ${{ inputs.debug && 'debug' || inputs.headed && 'headed' || 'normal' }}
+
+      - name: 📋 Generate Test Report
+        if: always()
+        run: |
+          echo "Report available in artifacts"
+
+      # Built-in Actions: Upload Artifacts
+      - name: 📤 Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ matrix.browser }}-${{ github.run_id }}
+          path: playwright-report/
+          retention-days: 30
+          compression-level: 9
+
+      - name: 📤 Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.browser }}-${{ github.run_id }}
+          path: test-results/
+          retention-days: 30
+          compression-level: 9
+
+      - name: 📸 Upload Failed Tests Screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: failed-tests-${{ matrix.browser }}-${{ github.run_id }}
+          path: test-results/
+          retention-days: 10
+
+  test-summary:
+    name: 📊 Test Summary
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+    steps:
+      - name: ✅ Tests Completed
+        run: |
+          echo "Job Status: ${{ needs.test.result }}"
+          if [ "${{ needs.test.result }}" == "success" ]; then
+            echo "✅ All tests passed!"
+          else
+            echo "❌ Some tests failed"
+          fi
+
+  notify:
+    name: 🔔 Notification
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: always()
+    steps:
+      - name: 📢 Test Status
+        run: |
+          echo "Workflow completed with status: ${{ needs.test.result }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Event: ${{ github.event_name }}"

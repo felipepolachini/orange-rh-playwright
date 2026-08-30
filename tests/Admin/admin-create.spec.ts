@@ -1,7 +1,7 @@
 import { test } from '../support';
 import { buildUserData } from '../support/data/admin/userController';
 
-test.describe('Admin - Create System User', () => {
+test.describe('Admin - Create System User',{ tag: '@admin'}, () => {
 
     let createdUsername: string | undefined;
 
@@ -17,7 +17,7 @@ test.describe('Admin - Create System User', () => {
         }
     });
 
-    test('TC104: Should add a new user with valid data', async ({ admin }) => {
+    test('TC104: Should add a new user with valid data',  async ({ admin }) => {
 
         const userData = buildUserData();
 
@@ -30,7 +30,7 @@ test.describe('Admin - Create System User', () => {
 
 });
 
-test.describe('Admin - Add User Form Validation', () => {
+test.describe('Admin - Add User Form Validation',{ tag: '@admin'}, () => {
 
     test.beforeEach(async ({ login, admin }) => {
         await login.navigate();

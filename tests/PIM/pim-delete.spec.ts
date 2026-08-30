@@ -2,7 +2,7 @@ import { test, expect } from '../support';
 import { buildEmployeeData } from '../support/data/pim/employeeController';
 import type { ApiCreatedEmployee } from '../support/api/pimAPI';
 
-test.describe('PIM - Delete Employee Information', () => {
+test.describe('PIM - Delete Employee Information', { tag: '@pim'}, () => {
 
     let createdEmployee: ApiCreatedEmployee | undefined;
 

@@ -1,7 +1,7 @@
 import { test, expect } from '../support';
 import { buildEmployeeData } from '../support/data/pim/employeeController';
 
-test.describe('PIM - Add Employee Information', () => {
+test.describe('PIM - Add Employee Information', { tag: '@pim'}, () => {
 
     let createdEmployeeId: string | undefined;
 
@@ -34,7 +34,7 @@ test.describe('PIM - Add Employee Information', () => {
 
 });
 
-test.describe('PIM - Add Employee Form Validation', () => {
+test.describe('PIM - Add Employee Form Validation', { tag: '@pim'}, () => {
 
     test.beforeEach(async ({ login, pim }) => {
         await login.navigate();

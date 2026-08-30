@@ -1,0 +1,49 @@
+name: 'Setup Environment'
+description: 'Setup environment variables and create .env file for CI/CD'
+
+inputs:
+  admin-username:
+    description: 'Admin username for Orange HRM'
+    required: true
+  admin-password:
+    description: 'Admin password for Orange HRM'
+    required: true
+  base-url:
+    description: 'Base URL for the application'
+    required: true
+  environment:
+    description: 'Environment (production or staging)'
+    required: true
+    default: 'production'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Create .env file
+      run: |
+        cat > .env << EOF
+        BASE_URL=${{ inputs.base-url }}
+        API_BASE_PATH=web/index.php/api/v2
+        ADMIN_USERNAME=${{ inputs.admin-username }}
+        ADMIN_PASSWORD=${{ inputs.admin-password }}
+        STORAGE_STATE_PATH=playwright/.auth/admin.json
+        LOG_API_REPORT=true
+        CI=true
+        ENVIRONMENT=${{ inputs.environment }}
+        EOF
+        cat .env
+      shell: bash
+
+    - name: Create auth directory
+      run: |
+        mkdir -p playwright/.auth
+        echo "Auth directory created at: $(pwd)/playwright/.auth"
+      shell: bash
+
+    - name: Display workflow information
+      run: |
+        echo "Event: ${{ github.event_name }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Actor: ${{ github.actor }}"
+        echo "Environment: ${{ inputs.environment }}"
+      shell: bash

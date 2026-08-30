@@ -56,7 +56,7 @@ export default defineConfig({
          ...devices['Desktop Chrome'],
          baseURL: process.env.BASE_URL,
          storageState: process.env.STORAGE_STATE_PATH,
-         locale: 'en-US'
+         locale: 'en-US',
       },
       
       dependencies: ['setup'],
