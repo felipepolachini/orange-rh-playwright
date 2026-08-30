@@ -42,6 +42,10 @@ jobs:
     outputs:
       should-run: ${{ steps.check-changes-action.outputs.should-run }}
     steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       # COMPOSITE ACTION: Check for Changes
       - name: Check for relevant changes
         id: check-changes-action
