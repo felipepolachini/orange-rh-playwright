@@ -3,7 +3,7 @@ import { buildEmployeeData } from '../support/data/pim/employeeController';
 import type { ApiCreatedEmployee } from '../support/api/pimAPI';
 import { faker } from '@faker-js/faker';
 
-test.describe('PIM - Search Employee Information', () => {
+test.describe('PIM - Search Employee Information', { tag: '@pim'}, () => {
 
     let createdEmployee: ApiCreatedEmployee | undefined;
 
@@ -39,7 +39,7 @@ test.describe('PIM - Search Employee Information', () => {
 
 });
 
-test.describe('Filters without dedicated test data', () => {
+test.describe('Filters without dedicated test data', { tag: '@pim'}, () => {
 
         test.beforeEach(async ({ login, pim }) => {
             await login.navigate();

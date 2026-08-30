@@ -1,0 +1,31 @@
+name: 'Run Tests'
+description: 'Run Playwright tests with different modes (normal, headed, debug)'
+
+inputs:
+  test-mode:
+    description: 'Test execution mode: normal, headed, or debug'
+    required: true
+    default: 'normal'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🎭 Run Playwright Tests (normal mode)
+      if: inputs.test-mode == 'normal'
+      run: npm run run_tests
+      shell: bash
+
+    - name: 🎭 Run Playwright Tests (headed mode)
+      if: inputs.test-mode == 'headed'
+      run: npm run run_tests_headed
+      shell: bash
+
+    - name: 🎭 Run Playwright Tests (debug mode)
+      if: inputs.test-mode == 'debug'
+      run: npm run run_tests_debug
+      shell: bash
+
+    - name: Display test mode used
+      run: | 
+        echo "Tests executed in mode: ${{ inputs.test-mode }}"
+      shell: bash

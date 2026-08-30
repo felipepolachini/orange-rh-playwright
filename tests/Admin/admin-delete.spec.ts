@@ -2,7 +2,7 @@ import { test, expect } from '../support';
 import { ApiCreatedUser } from '../support/api/adminApi';
 import { buildUserData } from '../support/data/admin/userController';
 
-test.describe(('Admin - Delete Users'), () => {
+test.describe('Admin - Delete Users', { tag: '@admin' }, () => {
 
     let createdUser: ApiCreatedUser | undefined;
 
